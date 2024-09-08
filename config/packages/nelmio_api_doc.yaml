@@ -1,9 +1,175 @@
 nelmio_api_doc:
     documentation:
         info:
-            title: My App
-            description: This is an awesome app!
+            title: Blog Management API
+            description: This is the documentation of the Blog Management API built with Symfony.
             version: 1.0.0
+        paths:
+            /api/doc:
+                get:
+                    summary: "Documentation Blog API"
+                    description: "Documentation for Blog Management API Symfony project"
+            /api/blog-articles:
+                post:
+                    summary: "Create a blog article"
+                    description: "Create a new blog article in the system"
+                    operationId: "createBlogArticle"
+                    security: 
+                        - bearerAuth: [write]
+                    tags: [ "BlogArticle" ]
+                    requestBody:
+                        description: "New blog article object"
+                        required: true
+                        content:
+                            application/json:
+                                schema:
+                                    $ref: "#/components/schemas/BlogArticle"
+                    responses:
+                        '201':
+                            description: "Blog article created"
+                        '400':
+                            description: "Invalid input"
+                get:
+                    summary: "List all blog articles"
+                    description: "List all blog articles from the system"
+                    operationId: "listBlogArticle"
+                    security: 
+                        - bearerAuth: [read]
+                    tags: ["BlogArticle"]
+                    responses:
+                        '200':
+                            description: "list of all blog article"
+            /api/blog-articles/{id}:
+                get:
+                    summary: "get a blog article by id"
+                    description: "get a blog article from the system by id"
+                    operationId: "getBlogArticle"
+                    security: 
+                        - bearerAuth: [read]
+                    tags: [ "BlogArticle" ]
+                    parameters:
+                        - in: path
+                          name: id
+                          schema:
+                            type: integer
+                          required: true
+                          description: The blog article ID
+                    responses:
+                        '200':
+                            description: "Blog article items"
+                        '404':
+                            description: "Blog article not found"
+                patch:
+                    summary: "Update a blog article"
+                    description: "Update a new blog article in the system"
+                    operationId: "updateBlogArticle"
+                    security: 
+                        - bearerAuth: [write]
+                    tags: [ "BlogArticle" ]
+                    requestBody:
+                        description: "Update blog article object"
+                        required: true
+                        content:
+                            application/json:
+                                schema:
+                                    $ref: "#/components/schemas/BlogArticle"
+                    parameters:
+                        - in: path
+                          name: id
+                          schema:
+                            type: integer
+                          required: true
+                          description: The blog article ID
+                    responses:
+                        '200':
+                            description: "Blog article updated"
+                        '404':
+                            description: "Blog article not found"
+                delete:
+                    summary: "Delete a blog article"
+                    description: "Delete a new blog article in the system"
+                    operationId: "deleteeBlogArticle"
+                    security: 
+                        - bearerAuth: [write]
+                    tags: [ "BlogArticle" ]
+                    parameters:
+                        - in: path
+                          name: id
+                          schema:
+                            type: integer
+                          required: true
+                          description: The blog article ID
+                    responses:
+                        '200':
+                            description: "Blog article deleted"
+                        '404':
+                            description: "Blog article not found"
+            /api/login_check:
+                post:
+                    operationId: postCredentialsItem
+                    tags:
+                        - Token
+                    summary: Permet d'obtenir le token JWT pour se logger.
+                    requestBody:
+                        description: Crée un nouveau token JWT
+                        content:
+                            application/json:
+                                schema:
+                                    $ref: '#/components/schemas/Credentials'
+                    responses:
+                        '200':
+                            description: Récupère le token JWT
+                            content:
+                                application/json:
+                                    schema:
+                                        $ref: '#/components/schemas/Token'
+        components:
+            schemas:
+                BlogArticle:
+                    type: object
+                    properties:
+                        authorId:
+                            type: integer
+                            example: 1
+                        title:
+                            type: string
+                            example: "How to use Symfony"
+                        content:
+                            type: string
+                            example: "This is the content of the article..."
+                        slug:
+                            type: string
+                            example: "how-to-use-symfony"
+                        status:
+                            type: string
+                            enum: ["draft", "published", "deleted"]
+                            example: "draft"
+                        keywords:
+                            type: json
+                            example: ["symfony", "api"]
+                        coverPictureRef:
+                            type: string
+                            example: "data:image/jpeg;base64,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"
+                Token:
+                    type: object
+                    properties:
+                        token:
+                            type: string
+                            readOnly: true
+                Credentials:
+                    type: object
+                    properties:
+                        email:
+                            type: string
+                            default: dahbi.essakali.sofiane@gmail.com
+                        password:
+                            type: string
+                            default: 07101992
+            securitySchemes:
+                bearerAuth:
+                    type: http
+                    scheme: bearer
+                    bearerFormat: JWT
     areas: # to filter documented areas
         path_patterns:
             - ^/api(?!/doc$) # Accepts routes under /api except /api/doc

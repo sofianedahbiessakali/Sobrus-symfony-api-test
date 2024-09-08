@@ -11,6 +11,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Entity\BlogArticle;
 use App\Enum\ArticleStatus;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use OpenApi\Attributes as OA;
 
 #[Route('/api/blog-articles')]
 class BlogArticleController extends AbstractController
