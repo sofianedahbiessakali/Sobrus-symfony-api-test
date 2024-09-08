@@ -60,6 +60,7 @@ class BlogArticle
 
     public function __construct() {
         $this->creationDate = new \DateTime();
+        $this->status = ArticleStatus::DRAFT;
     }
 
     public function getId(): ?int
@@ -165,7 +166,7 @@ class BlogArticle
 
     public function getCoverPictureRef(): ?string
     {
-        return $this->coverPictureRef;
+        return '/uploaded_pictures/' .$this->coverPictureRef;
     }
 
     public function setCoverPictureRef(string $coverPictureRef): static
