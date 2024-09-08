@@ -11,7 +11,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 use App\Entity\BlogArticle;
 use App\Enum\ArticleStatus;
 
-#[Route('/blog-articles')]
+#[Route('/api/blog-articles')]
 class BlogArticleController extends AbstractController
 {
 
@@ -23,7 +23,7 @@ class BlogArticleController extends AbstractController
     
     // POST /blog-articles to create a new blog article.
     #[Route('', name: 'create_blog_article', methods: ['POST'])]
-    public function create(Request $request, ValidatorInterface $validator): JsonResponse
+    public function create(Request $request, ValidatorInterface $validator, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -39,7 +39,7 @@ class BlogArticleController extends AbstractController
         $errors = $validator->validate($article);
         if (count($errors) > 0) {
             return $this->json($errors, JsonResponse::HTTP_BAD_REQUEST);
-        }
+        } 
 
         $this->em->persist($article);
         $this->em->flush();
