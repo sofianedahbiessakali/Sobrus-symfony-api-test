@@ -12,15 +12,18 @@ use App\Entity\BlogArticle;
 use App\Enum\ArticleStatus;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use OpenApi\Attributes as OA;
+use App\Service\BannedWordsLoader;
 
 #[Route('/api/blog-articles')]
 class BlogArticleController extends AbstractController
 {
 
     private EntityManagerInterface $em;
+    private BannedWordsLoader $bannedWordsLoader;
 
-    public function __construct(EntityManagerInterface $em){
+    public function __construct(EntityManagerInterface $em, BannedWordsLoader $bannedWordsLoader){
         $this->em = $em;
+        $this->bannedWordsLoader = $bannedWordsLoader;
     }
     
     // POST /blog-articles to create a new blog article.
@@ -35,8 +38,16 @@ class BlogArticleController extends AbstractController
         $article->setContent($data['content']);
         $article->setStatus(ArticleStatus::DRAFT);  // Default to 'draft'
         $article->setSlug($data['slug']);
-        //$article->setCoverPictureRef($data['coverPictureRef']);
-        $article->setKeywords($data['keywords'] ?? []);
+
+        $bannedWords = $this->bannedWordsLoader->getBannedWords();
+
+        $topKeywords = $this->findTopThreeWords($data['content'], $bannedWords);
+        $article->setKeywords($topKeywords);
+
+        $validateBanned = $this->validateContentBannedWords($data['content'], $bannedWords);
+        if ($validateBanned !== null) {
+            return $validateBanned;
+        }
 
         if (isset($data['coverPictureRef']) && !empty($data['coverPictureRef'])) {
             $base64String = $data['coverPictureRef'];
@@ -108,8 +119,14 @@ class BlogArticleController extends AbstractController
         if (isset($data['coverPictureRef'])) {
             $article->setCoverPictureRef($data['coverPictureRef']);
         }
-        if (isset($data['keywords'])) {
-            $article->setKeywords($data['keywords']);
+        
+        $bannedWords = $this->bannedWordsLoader->getBannedWords();
+        $topKeywords = $this->findTopThreeWords($data['content'], $bannedWords);
+        $article->setKeywords($topKeywords);
+
+        $validateBanned = $this->validateContentBannedWords($data['content'], $bannedWords);
+        if ($validateBanned !== null) {
+            return $validateBanned;
         }
 
         $errors = $validator->validate($article);
@@ -141,6 +158,7 @@ class BlogArticleController extends AbstractController
         return $this->json(['message' => 'Article deleted successfully']);
     }
 
+    // upload base64 Image
     private function uploadBase64Image(string $base64String): ?string
     {
         if (preg_match('/^data:image\/(\w+);base64,/', $base64String, $type)) {
@@ -174,6 +192,44 @@ class BlogArticleController extends AbstractController
             return $filename;
         }
 
+        return null;
+    }
+
+    // find the 3 most frequently occurring words in a given text, excluding a list of banned words
+    function findTopThreeWords(string $text, array $banned): array
+    {
+
+        $text = strtolower($text);
+        $text = preg_replace('/[^\w\s]/', '', $text); // Remove punctuation
+
+        $words = explode(' ', $text);
+
+        $wordCount = [];
+        foreach ($words as $word) {
+            $word = trim($word);
+            if ($word === '' || in_array($word, $banned) || strlen($word) <= 3) {
+                continue;
+            }
+
+            if (!isset($wordCount[$word])) {
+                $wordCount[$word] = 0;
+            }
+            $wordCount[$word]++;
+        }
+
+        arsort($wordCount);
+
+        return array_slice(array_keys($wordCount), 0, 3);
+    }
+
+    // validate the content of the blog article content banned words
+    function validateContentBannedWords(string $content, array $bannedWords): ?JsonResponse
+    {
+        foreach ($bannedWords as $bannedWord) {
+            if (strpos(strtolower($content), strtolower($bannedWord)) !== false) {
+                return $this->json(['error' => "Content contains a banned word: $bannedWord"], JsonResponse::HTTP_BAD_REQUEST);
+            }
+        }
         return null;
     }
 }

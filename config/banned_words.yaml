@@ -1,0 +1,8 @@
+# Define list of banned words
+banned_words: [
+  drug,
+  kill,
+  shit,
+  🖕
+]
+  
